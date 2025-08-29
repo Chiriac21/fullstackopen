@@ -45,5 +45,5 @@ const App = () => {
     </div>
   )
 }
-
+ animals.filter(x => x.species === 'dog')
 export default App
