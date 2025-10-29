@@ -43,24 +43,29 @@ blogRouter.delete('/:id', userExtractor, async (request, response) => {
   }
 
   await Blog.findByIdAndDelete(request.params.id)
+  user.blogs = user.blogs.filter(b => b.toString() !== request.params.id)
+  await user.save()
   response.status(204).end()
 })
 
 blogRouter.put('/:id', async (request, response) => {
-  const { title, author, url, likes } = request.body;
+  const allowed = ['title', 'author', 'url', 'likes', 'user'];
+  const updates = {};
 
-  const blog = await Blog.findById(request.params.id)
+  for (const key of allowed) {
+    if (Object.prototype.hasOwnProperty.call(request.body, key)) {
+      updates[key] = request.body[key];
+    }
+  }
 
-  if(!blog)
-    response.status(404).end()
+  const updated = await Blog.findByIdAndUpdate(
+    request.params.id,
+    updates,
+    { new: true, runValidators: true, context: 'query' }
+  );
 
-  blog.title = title
-  blog.author = author
-  blog.url = url
-  blog.likes = likes
-
-  const updatedNote = await blog.save()
-  response.json(updatedNote)
+  if (!updated) return response.status(404).end();
+  response.json(updated);
 })
 
 
