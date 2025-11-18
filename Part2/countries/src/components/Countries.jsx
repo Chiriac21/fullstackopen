@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import weatherService from "../services/weatherService";
 
-const Countries = ({countries, setCountries, countrySearch}) => {
+const Countries = ({countries, setCountries }) => {
     const [weather, setWeather] = useState(null);
     
     useEffect(() => {
@@ -14,12 +14,11 @@ const Countries = ({countries, setCountries, countrySearch}) => {
         }
     }, [countries])
     
-
     const showCountryDetails = (countryToShow) => {
-        setCountries([countryToShow]);
+        setCountries(countryToShow);
     }
 
-    if(countries.length > 10)
+    if(countries.length > 10 )
     {
         return (
         <>
@@ -59,12 +58,23 @@ const Countries = ({countries, setCountries, countrySearch}) => {
         );
     }
 
+    if(countries.length === 0 && weather)
+    {
+        return (
+        <>
+            <div>
+                No matches, specify enother filter
+            </div>
+        </>
+        )
+    }
+
     return(
         <>
         <div>
          {countries.map((country) => 
          <p 
-            key={country.name.common}>{country.name.common} <button onClick={() => showCountryDetails(country)}>Show</button>
+            key={country.name.common}>{country.name.common} <button onClick={() => showCountryDetails(country.name.common)}>Show</button>
          </p>)}
         </div>
         </>

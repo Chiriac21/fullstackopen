@@ -7,9 +7,9 @@ const setToken = newToken => {
   token = `Bearer ${newToken}`;
 }
 
-const getAll = () => {
-  const request = axios.get(baseUrl)
-  return request.then(response => response.data)
+const getAll = async () => {
+  const response = await axios.get(baseUrl)
+  return response.data
 }
 
 const createBlog = async (newBlog) => {
@@ -33,4 +33,9 @@ const deleteBlog = async (id) => {
   return response.data
 }
 
-export default { getAll, createBlog, likeBlog, deleteBlog, setToken }
+const addComment = async (id, comment) => {
+  const response = await axios.post(`${baseUrl}/${id}/comments`, {comment})
+  return response.data
+}
+
+export default { getAll, createBlog, likeBlog, deleteBlog, setToken, addComment }

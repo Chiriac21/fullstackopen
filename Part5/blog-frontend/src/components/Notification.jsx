@@ -1,5 +1,9 @@
-const Notification = ({message, type}) => {
-    if(!message)
+import { useSelector } from 'react-redux'
+
+const Notification = () => {
+    const notification = useSelector(state => state.notification)
+
+    if(!notification.message)
         return null;
     
     const baseStyle = {
@@ -13,13 +17,13 @@ const Notification = ({message, type}) => {
 
     const messageStyle = {
         ...baseStyle,
-        color: type === 'error' ? 'red' : 'green',
-        borderColor: type === 'error' ? 'red' : 'green',
+        color: notification.type === 'error' ? 'red' : 'green',
+        borderColor: notification.type === 'error' ? 'red' : 'green',
     };
 
     return (
         <div style={messageStyle}>
-            {message}
+            {notification.message}
         </div>
     );
 }

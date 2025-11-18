@@ -1,124 +1,88 @@
-import { useState, useEffect, useRef } from 'react'
-import Blog from './components/Blog'
+import { useEffect,  } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
+import { getRegisteredUsers } from './reducers/usersReducer'
+import { initializeBlogs } from './reducers/blogsReducer'
+import { setActiveUser, setUserToNull } from './reducers/userReducer'
+import { Routes, Route, Link, useMatch} from 'react-router-dom'
+import UserLogin from './components/UserLogin'
+import {Users, User} from './components/Users'
+import Home from './components/Home'
 import Notification from './components/Notification'
-import blogService from './services/blogs'
-import loginService from './services/login'
-import Toggleable from './components/Toggable'
-import BlogForm from './components/BlogForm'
+import Blog from './components/Blog'
+import {Button, Container, Nav, Navbar } from 'react-bootstrap'
 
 const App = () => {
-  const [blogs, setBlogs] = useState([])
-  const [message, setMessage] = useState({ message: null, type: null })
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [user, setUser] = useState(null)
+  const dispatch = useDispatch();
+  const blogs = useSelector(state => state.blogs)
+  const user = useSelector(state => state.user)
+  const registeredUsers = useSelector(state => state.users)
 
-  useEffect(() => {
-    blogService.getAll().then(blogs =>
-      setBlogs( blogs )
-    )
-    
-  }, [])
+  const userMatch = useMatch('/users/:id')
+  const registeredUser = userMatch 
+  ? registeredUsers.find(user => user.id === userMatch.params.id)
+  : null
 
-  useEffect(() => {
-    const loggedBlogUser = window.localStorage.getItem('LoggedBlogappUser')
-    if(loggedBlogUser){
-      const user = JSON.parse(loggedBlogUser)
-      setUser(user)
-      blogService.setToken(user.token)
-    }
-  }, [])
+  const blogMatch = useMatch('/blogs/:id')
+  const blogToFind = blogMatch 
+  ? blogs.find(blog => blog.id === blogMatch.params.id)
+  : null
 
   const onLogout= () => {
-    window.localStorage.removeItem('LoggedBlogappUser')
-    setUser(null)
+    dispatch(setUserToNull())
   }
 
-  const onLogin = async (event) => {
-    event.preventDefault()
+  useEffect(() => {
+    dispatch(initializeBlogs())
+    dispatch(setActiveUser())
+    dispatch(getRegisteredUsers())
+  }, [dispatch])
 
-    try {
-      const user = await loginService.login({ username, password })
-
-      window.localStorage.setItem('LoggedBlogappUser', JSON.stringify(user))
-      blogService.setToken(user.token)
-      setUser(user)
-      setUsername('')
-      setPassword('')
-    }catch{
-      setMessage({ message: 'Wrong credentials', type: 'error' })
-      setTimeout(() => {
-        setMessage({ message: null, type: null })
-      }, 5000)
-    }
+  const navigatorStyle = {
+    backgroundColor: "lightgrey",
+    display: "flex",
+    gap: 10,
+    fontSize: 18,
+    textAlign: "center"
   }
 
-  const onCreate = (blogObject) => {
-    blogsFormRef.current.toggleVisibility()
-    blogService.createBlog(blogObject).then(returnedBlog => {
-      const hasUserName = returnedBlog.user && returnedBlog.user.name
-      const blogToAdd = hasUserName
-        ? returnedBlog
-        : {
-          ...returnedBlog,
-          user: {
-            id: returnedBlog.user,
-            username: user?.username,
-            name: user?.name,
-          }
-        }
-      setBlogs(prev => prev.concat(blogToAdd))
-      setMessage({ message: 'a new blog ' + blogToAdd.title + ' by ' + blogToAdd.author + ' added', type: 'success' })
-      setTimeout(() => {
-        setMessage({ message: null, type: null })
-      }, 5000)
-    })
-
+ const pageStyle = {
+    margin: 10
   }
 
-  const blogsFormRef = useRef()
 
   if(user === null){
     return (
-      <div>
-        <h2>Log in to application</h2>
-        <Notification message={message?.message} type={message?.type}/>
-        <form onSubmit={onLogin}>
-          <label>
-            username
-            <input
-              type="text"
-              value={username}
-              onChange={({ target }) => setUsername(target.value)}/>
-          </label>
-          <br></br>
-          <label>
-            password
-            <input
-              type="password"
-              value={password}
-              onChange={({ target }) => setPassword(target.value)}/>
-          </label>
-          <br></br>
-          <button type="submit">login</button>
-        </form>
-      </div>
+      <UserLogin/>
     )
   }
 
   return (
     <div>
-      <h2>blogs</h2>
-      <Notification message={message?.message} type={message?.type}/>
-      <div>
-        <p>{user.name} logged in.</p>
-        <button onClick={onLogout}>logout</button> <br/><br/>
-        <Toggleable acceptButtonLabel="Create new blog" cancelButtonLabel="Cancel" ref={blogsFormRef}>
-          <BlogForm onCreate={onCreate}/>
-        </Toggleable><br/><br/>
-        {
-          blogs.sort((a, b) => b.likes - a.likes).map(blog => <Blog key={blog.id} blog={blog} user={user} setBlogs={setBlogs}/>)
-        }
+      <Navbar bg="dark" data-bs-theme="dark">
+        <Container className='mx-auto'>
+          <Navbar.Brand href="/">Blog App</Navbar.Brand>
+          <Nav className="me-auto">
+            <Nav.Link href="/">Blogs</Nav.Link>
+            <Nav.Link href="/users">Users</Nav.Link>
+          </Nav>
+        <Navbar.Toggle />
+        <Navbar.Collapse className="justify-content-end">
+          <Navbar.Text>
+            Signed in as: <a href={`/users`}>{user.name}</a>
+            <Button className="ms-3" variant="secondary" onClick={onLogout}>Logout</Button>
+          </Navbar.Text>
+        </Navbar.Collapse>
+        </Container>
+      </Navbar>
+      <br/>
+      <div style={pageStyle}>
+        <Notification/>
+        <Routes>
+          <Route path="/" element={<Home user={user} blogs={blogs}/>}/>
+          <Route path="/users" element={<Users users={registeredUsers} />}/>
+          <Route path="/users/:id" element={<User user={registeredUser}/>} />
+          <Route path="/blogs/:id" element={<Blog blog={blogToFind} user={user}/>}/>
+        </Routes>
       </div>
     </div>
   )

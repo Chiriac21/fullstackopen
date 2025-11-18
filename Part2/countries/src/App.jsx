@@ -1,32 +1,29 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Countries from './components/Countries'
-import searchService from "./services/searchService"
+import { useCountry } from './hooks'
 
 const App = () => {
-  const [countries, setCountries] = useState([]);
-  const [countrySearch, setCountrySearch] = useState(null);
-
-  useEffect(() => {
-    searchService
-      .getAllCountries()
-      .then(resp => {setCountries(resp)})
-  }, [])
+  const [inputValue, setInputValue] = useState('');
+  const [searchName, setSearchName] = useState(null);
+  const { country } = useCountry(searchName);
 
   const handleSearchOnChanged = (event) => {
-    setCountrySearch(event.target.value);
+    setInputValue(event.target.value);
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    setSearchName(inputValue);
   }
   
-  const filteredCountries = countries.filter(country =>
-        country.name.common.toLowerCase().includes(countrySearch?.toLowerCase())
-  );
-
-  return(
-    <>
+  return (
     <div>
-      find countries <input onChange={handleSearchOnChanged}/>
-      <Countries countries={filteredCountries} setCountries={setCountries} countrySearch={countrySearch}/>
+      <form onSubmit={handleSubmit}>
+        find countries <input value={inputValue} onChange={handleSearchOnChanged} />
+        <button type="submit">search</button>
+      </form>
+        <Countries countries={country} setCountries={setSearchName}/>
     </div>
-    </>
   )
 }
 

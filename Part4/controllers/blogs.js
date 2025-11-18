@@ -22,7 +22,8 @@ blogRouter.post('/', userExtractor, async (request, response) => {
     author: body.author,
     url: body.url,
     likes: body.likes || 0,
-    user: user._id
+    user: user._id,
+    comments: body.comments || []
   })
 
   const result = await blog.save()
@@ -49,7 +50,7 @@ blogRouter.delete('/:id', userExtractor, async (request, response) => {
 })
 
 blogRouter.put('/:id', async (request, response) => {
-  const allowed = ['title', 'author', 'url', 'likes', 'user'];
+  const allowed = ['title', 'author', 'url', 'likes', 'user', 'comments'];
   const updates = {};
 
   for (const key of allowed) {
@@ -66,6 +67,17 @@ blogRouter.put('/:id', async (request, response) => {
 
   if (!updated) return response.status(404).end();
   response.json(updated);
+})
+
+blogRouter.post('/:id/comments', async (request, response) => {
+  const blogToFind = await Blog.findById(request.params.id)
+
+  blogToFind.comments = blogToFind.comments.concat(request.body.comment)
+
+  const updatedBlog = await blogToFind.save()
+
+  if (!updatedBlog) return response.status(404).end();
+  response.json(updatedBlog);
 })
 
 
